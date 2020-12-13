@@ -49,6 +49,11 @@ runs:
     - name: 'Update infra first'
       run: tlmgr update --self
       shell: bash
+    - name: 'Add tlcontrib'
+      run: |
+        tlmgr repository add http://contrib.texlive.info/current tlcontrib || true
+        tlmgr pinning add tlcontrib "*"
+      shell: bash
     - name: 'Install all the required packages'
       run: tlmgr install ${{ inputs.packages }}
       shell: bash

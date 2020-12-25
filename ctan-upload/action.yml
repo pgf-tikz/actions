@@ -101,7 +101,7 @@ runs:
           printf '"%s=%s"' "$1" "$str"
         }
 
-        cat <<EOF | curl --config -
+        cat <<EOF | tee /dev/stderr | curl --config - | tee /dev/stderr | grep -qv '\(ERROR\|WARNING\)'
         ${announcement:+form = $(escape "announcement" "$announcement")}
         $(IFS=';'; for a in $author; do echo "form = $(escape "author" "$a")"; done)
         ${bugs:+form = $(escape "bugs" "$bugs")}

@@ -89,33 +89,37 @@ runs:
       run: |
         escape() {
           local str
-          str=${1@Q}
-          str=${str##\$}
-          str=${str##\'}
-          str=${str%%\'}
-          str=${str//\"/\\\"}
-          printf '"%s"' "$str"
+          if [[ -e $2 ]]; then
+            str="<$2"
+          else
+            str=${2@Q}
+            str=${str##\$}
+            str=${str##\'}
+            str=${str%%\'}
+            str=${str//\"/\\\"}
+          fi
+          printf '"%s=%s"' "$1" "$str"
         }
 
         cat <<EOF | curl --config -
-        ${announcement:+form = $(escape "announcement=$announcement")}
-        $(IFS=';'; for a in $author; do echo "form = $(escape "author=$a")"; done)
-        ${bugs:+form = $(escape "bugs=$bugs")}
-        ${ctanPath:+form = $(escape "ctanPath=$ctanPath")}
-        form = $(escape "description=$description")
-        form = $(escape "email=$email")
-        form = $(escape "file=@$file")
-        ${home:+form = $(escape "home=$home")}
-        $(IFS='; '; for l in $license; do echo "form = $(escape "license=$l")"; done)
-        ${mailinglist:+form = $(escape "mailinglist=$mailinglist")}
-        ${note:+form = $(escape "note=$note")}
-        form = $(escape "pkg=$pkg")
-        ${repository:+form = $(escape "repository=$repository")}
-        form = $(escape "summary=$summary")
-        form = $(escape "support=$support")
-        ${topic:+form = $(escape "topic=$topic")}
-        form = $(escape "update=$update")
-        form = $(escape "uploader=$uploader")
-        form = $(escape "version=$version")
+        ${announcement:+form = $(escape "announcement" "$announcement")}
+        $(IFS=';'; for a in $author; do echo "form = $(escape "author" "$a")"; done)
+        ${bugs:+form = $(escape "bugs" "$bugs")}
+        ${ctanPath:+form = $(escape "ctanPath" "$ctanPath")}
+        form = $(escape "description" "$description")
+        form = $(escape "email" "$email")
+        form = $(escape "file" "@$file")
+        ${home:+form = $(escape "home" "$home")}
+        $(IFS='; '; for l in $license; do echo "form = $(escape "license" "$l")"; done)
+        ${mailinglist:+form = $(escape "mailinglist" "$mailinglist")}
+        ${note:+form = $(escape "note" "$note")}
+        form = $(escape "pkg" "$pkg")
+        ${repository:+form = $(escape "repository" "$repository")}
+        form = $(escape "summary" "$summary")
+        form = $(escape "support" "$support")
+        ${topic:+form = $(escape "topic" "$topic")}
+        form = $(escape "update" "$update")
+        form = $(escape "uploader" "$uploader")
+        form = $(escape "version" "$version")
         url = "https://www.ctan.org/submit/$action"
         EOF

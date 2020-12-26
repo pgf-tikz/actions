@@ -87,39 +87,52 @@ runs:
         uploader: ${{ inputs.uploader }}
         version: ${{ inputs.version }}
       run: |
-        escape() {
-          local str
+        formfield() {
+          local method str
+
+          if [[ -z $2 && $3 == optional ]]; then
+            return
+          fi
+
           if [[ -e $2 ]]; then
+            method="form"
             str="<$2"
           else
+            method="form-string"
             str=${2@Q}
             str=${str##\$}
             str=${str##\'}
             str=${str%%\'}
             str=${str//\"/\\\"}
           fi
-          printf '"%s=%s"' "$1" "$str"
+
+          printf '%s = "%s=%s"' "$method" "$1" "$str"
         }
 
-        cat <<EOF | tee /dev/stderr | curl --config - | tee /dev/stderr | grep -qv '\(ERROR\|WARNING\)'
-        ${announcement:+form = $(escape "announcement" "$announcement")}
-        $(IFS=';'; for a in $author; do echo "form = $(escape "author" "$a")"; done)
-        ${bugs:+form = $(escape "bugs" "$bugs")}
-        ${ctanPath:+form = $(escape "ctanPath" "$ctanPath")}
-        form = $(escape "description" "$description")
-        form = $(escape "email" "$email")
-        form = $(escape "file" "@$file")
-        ${home:+form = $(escape "home" "$home")}
-        $(IFS='; '; for l in $license; do echo "form = $(escape "license" "$l")"; done)
-        ${mailinglist:+form = $(escape "mailinglist" "$mailinglist")}
-        ${note:+form = $(escape "note" "$note")}
-        form = $(escape "pkg" "$pkg")
-        ${repository:+form = $(escape "repository" "$repository")}
-        form = $(escape "summary" "$summary")
-        form = $(escape "support" "$support")
-        ${topic:+form = $(escape "topic" "$topic")}
-        form = $(escape "update" "$update")
-        form = $(escape "uploader" "$uploader")
-        form = $(escape "version" "$version")
+        #cat <<EOF | tee /dev/stderr | curl --config - | tee /dev/stderr | grep -qv '\(ERROR\|WARNING\)'
+        cat <<EOF
+        $(formfield "announcement" "$announcement" "optional")
+        $(IFS=';'; for a in $author; do
+          formfield "author" "$a" | xargs
+        done)
+        $(formfield "bugs" "$bugs" "optional")
+        $(formfield "ctanPath" "$ctanPath" "optional")
+        $(formfield "description" "$description")
+        $(formfield "email" "$email")
+        $(formfield "file" "@$file")
+        $(formfield "home" "$home" "optional")
+        $(IFS='; '; for l in $license; do
+          formfield "license" "$l" | xargs
+        done)
+        $(formfield "mailinglist" "$mailinglist" "optional")
+        $(formfield "note" "$note" "optional")
+        $(formfield "pkg" "$pkg")
+        $(formfield "repository" "$repository" "optional")
+        $(formfield "summary" "$summary")
+        $(formfield "support" "$support")
+        $(formfield "topic" "$topic" "optional")
+        $(formfield "update" "$update")
+        $(formfield "uploader" "$uploader")
+        $(formfield "version" "$version")
         url = "https://www.ctan.org/submit/$action"
         EOF

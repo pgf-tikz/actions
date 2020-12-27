@@ -94,7 +94,10 @@ runs:
             return
           fi
 
-          if [[ -e $2 ]]; then
+          if [[ $1 == file ]]; then
+            method="form"
+            str="@$2"
+          elif [[ -e $2 ]]; then
             method="form"
             str="<$2"
           else
@@ -118,7 +121,7 @@ runs:
         $(formfield "ctanPath" "$ctanPath" "optional")
         $(formfield "description" "$description")
         $(formfield "email" "$email")
-        $(formfield "file" "@$file")
+        $(formfield "file" "$file")
         $(formfield "home" "$home" "optional")
         $(IFS='; '; for l in $license; do
           echo "$(formfield "license" "$l")"

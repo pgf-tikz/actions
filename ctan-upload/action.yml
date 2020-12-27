@@ -109,11 +109,10 @@ runs:
           printf '%s = "%s=%s"' "$method" "$1" "$str"
         }
 
-        #cat <<EOF | tee /dev/stderr | curl --config - | tee /dev/stderr | grep -qv '\(ERROR\|WARNING\)'
-        cat <<EOF
+        cat <<EOF | tee /dev/stderr | curl --config - | tee /dev/stderr | grep -qv '\(ERROR\|WARNING\)'
         $(formfield "announcement" "$announcement" "optional")
         $(IFS=';'; for a in $author; do
-          formfield "author" "$a" | xargs
+          echo "$(formfield "author" "$a")"
         done)
         $(formfield "bugs" "$bugs" "optional")
         $(formfield "ctanPath" "$ctanPath" "optional")
@@ -122,7 +121,7 @@ runs:
         $(formfield "file" "@$file")
         $(formfield "home" "$home" "optional")
         $(IFS='; '; for l in $license; do
-          formfield "license" "$l" | xargs
+          echo "$(formfield "license" "$l")"
         done)
         $(formfield "mailinglist" "$mailinglist" "optional")
         $(formfield "note" "$note" "optional")

@@ -48,9 +48,10 @@ runs:
                 git show -s --oneline "$commit"
             fi
 
-            if [[ "true" != "${allow_no_signoff,,}" ]] &&
-                git show -s --format=%b "$commit" |
-                grep -qvF "$(git show -s --format="Signed-off-by: %aN <%aE>" "$commit")"
+            if [[ "true" != "${allow_no_signoff,,}" ]] && ! {
+                    git show -s --format=%b "$commit" |
+                    grep -qF "$(git show -s --format="Signed-off-by: %aN <%aE>" "$commit")"
+                }
             then
                 echo "Commit is not signed off by the committer"
                 status=1

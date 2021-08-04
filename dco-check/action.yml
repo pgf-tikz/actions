@@ -1,0 +1,60 @@
+name: 'Verify DCO for commits'
+inputs:
+  base_ref:
+    description: 'Base revision'
+    required: true
+  head_ref:
+    description: 'Head revision'
+    required: false
+    default: 'HEAD'
+  allow_merges:
+    description: 'Whether to allow merge commits'
+    required: false
+  allow_reverts:
+    description: 'Whether to allow reverting other commits'
+    required: false
+  allow_no-signoff:
+    description: 'Whether to allow commits missing "Signed-off by:"'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Check commits'
+      id: check
+      shell: bash
+      env:
+        base_ref: ${{ inputs.base_ref }}
+        head_ref: ${{ inputs.head_ref }}
+        allow_merges: ${{ inputs.allow_merges }}
+        allow_reverts: ${{ inputs.allow_reverts }}
+        allow_no_signoff: ${{ inputs.allow_no-signoff }}
+      run: |
+        set -eu
+        status=0
+        for commit in $(git rev-list "origin/${base_ref#refs/heads/}..${head_ref#refs/heads/}"); do
+            if [[ "true" != "${allow_merges,,}" ]] &&
+                git show -s --format=%P "$commit" | grep -qF " "
+            then
+                echo "Merge commits are not allowed"
+                status=1
+                git show -s --oneline "$commit"
+            fi
+
+            if [[ "true" != "${allow_reverts,,}" ]] &&
+                git show -s --format=%s "$commit" | grep -q "^Revert "
+            then
+                echo "Reverting commits is not allowed"
+                status=1
+                git show -s --oneline "$commit"
+            fi
+
+            if [[ "true" != "${allow_no_signoff,,}" ]] &&
+                git show -s --format=%b "$commit" |
+                grep -qvF "$(git show -s --format="Signed-off-by: %aN <%aE>" "$commit")"
+            then
+                echo "Commit is not signed off by the committer"
+                status=1
+                git show -s --oneline "$commit"
+            fi
+        done
+        exit "$status"

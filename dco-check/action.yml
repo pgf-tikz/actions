@@ -16,6 +16,10 @@ inputs:
   allow_no-signoff:
     description: 'Whether to allow commits missing "Signed-off by:"'
     required: false
+  allow_co-authored:
+    description: 'Whether to allow commits missing "Signed-off by:" but containing "Co-authored-by:"'
+    required: false
+    default: false
 runs:
   using: 'composite'
   steps:
@@ -28,6 +32,7 @@ runs:
         allow_merges: ${{ inputs.allow_merges }}
         allow_reverts: ${{ inputs.allow_reverts }}
         allow_no_signoff: ${{ inputs.allow_no-signoff }}
+        allow_co_authored: ${{ inputs.allow_co-authored }}
       run: |
         set -eu
         status=0
@@ -51,9 +56,12 @@ runs:
             if [[ "true" != "${allow_no_signoff,,}" ]] && ! {
                     git show -s --format=%b "$commit" |
                     grep -qF "$(git show -s --format="Signed-off-by: %aN <%aE>" "$commit")"
+                } && [[ "false" != "${allow_co_authored,,}" ]] && ! {
+                    git show -s --format=%b "$commit" |
+                    grep -qF "Co-authored-by: "
                 }
             then
-                echo "Commit is not signed off by the committer"
+                echo "Commit is neither signed off by the committer nor co-authored"
                 status=1
                 git show -s --oneline "$commit"
             fi

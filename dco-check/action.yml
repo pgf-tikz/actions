@@ -20,6 +20,10 @@ inputs:
     description: 'Whether to allow commits missing "Signed-off by:" but containing "Co-authored-by:"'
     required: false
     default: false
+  skip_dependabot:
+    description: 'Skip commits authored by dependabot[bot]'
+    required: false
+    default: true
 runs:
   using: 'composite'
   steps:
@@ -33,10 +37,17 @@ runs:
         allow_reverts: ${{ inputs.allow_reverts }}
         allow_no_signoff: ${{ inputs.allow_no-signoff }}
         allow_co_authored: ${{ inputs.allow_co-authored }}
+        skip_dependabot: ${{ inputs.skip_dependabot }}
       run: |
         set -eu
         status=0
         for commit in $(git rev-list "origin/${base_ref#refs/heads/}..${head_ref#refs/heads/}"); do
+            if [[ "true" == "${skip_dependabot,,}" ]] &&
+               [[ "dependabot[bot]" == "$(git show -s --format=%an "$commit")" ]]
+            then
+                continue
+            fi
+
             if [[ "true" != "${allow_merges,,}" ]] &&
                 git show -s --format=%P "$commit" | grep -qF " "
             then

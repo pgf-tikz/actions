@@ -8,6 +8,10 @@ inputs:
     description: 'Head revision'
     required: false
     default: 'HEAD'
+  ignore_authors:
+    description: 'List of authors to ignore when checking commits, separated by commas. Example: "dependabot[bot]"'
+    required: false
+    default: ''
   allow_merges:
     description: 'Whether to allow merge commits'
     required: false
@@ -30,6 +34,7 @@ runs:
       env:
         base_ref: ${{ inputs.base_ref }}
         head_ref: ${{ inputs.head_ref }}
+        ignore_authors: ${{ inputs.ignore_authors }}
         allow_merges: ${{ inputs.allow_merges }}
         allow_reverts: ${{ inputs.allow_reverts }}
         allow_no_signoff: ${{ inputs.allow_no-signoff }}
@@ -38,6 +43,11 @@ runs:
         set -eu
         status=0
         for commit in $(git rev-list "origin/${base_ref#refs/heads/}..${head_ref#refs/heads/}"); do
+            if [[ ",${ignore_authors}," == *",$(git show -s --format=%an "$commit"),"* ]]
+            then
+                continue
+            fi
+
             if [[ "true" != "${allow_merges,,}" ]] &&
                 git show -s --format=%P "$commit" | grep -qF " "
             then
